@@ -68,3 +68,46 @@ textarea {
 
   padding: 10px;
 }
+
+#palette {
+  position: fixed;
+  display: flex;
+  gap: 6px;
+
+  padding: 8px;
+
+  background: #222;
+  border: 1px solid #555;
+  border-radius: 6px;
+}
+
+#palette button {
+  width: 28px;
+  height: 28px;
+
+  padding: 0;
+}
+
+#palette button[data-color="#ffb86c"] {
+  background: #ffb86c;
+}
+
+#palette button[data-color="#8be9fd"] {
+  background: #8be9fd;
+}
+
+#palette button[data-color="#50fa7b"] {
+  background: #50fa7b;
+}
+
+#palette button[data-color="#ff79c6"] {
+  background: #ff79c6;
+}
+
+#palette button[data-color="#bd93f9"] {
+  background: #bd93f9;
+}
+
+#palette button[data-color="#f1fa8c"] {
+  background: #f1fa8c;
+}
