@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JS Coloring Tool</title>
-  
+
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' style='background:black'><text y='16' font-family='Trebuchet MS' font-weight='900' fill='orange'>UB</text></svg>">
 
   <link rel="stylesheet" href="./style.css">
@@ -49,6 +49,27 @@
 
     <div>
       <button id="close-rules-btn">Close</button>
+    </div>
+  </dialog>
+
+  <dialog id="edit-rule-dialog">
+    <h2>Edit Coloring</h2>
+
+    <textarea id="rule-text-input"></textarea>
+
+    <div id="edit-palette">
+      <button data-color="#ffb86c"></button>
+      <button data-color="#8be9fd"></button>
+      <button data-color="#50fa7b"></button>
+      <button data-color="#ff79c6"></button>
+      <button data-color="#bd93f9"></button>
+      <button data-color="#f1fa8c"></button>
+    </div>
+
+    <div>
+      <button id="apply-rule-btn" hidden>Apply</button>
+      <button id="remove-rule-btn">Remove Coloring</button>
+      <button id="cancel-rule-btn">Cancel</button>
     </div>
   </dialog>
 </body>

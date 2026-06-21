@@ -19,83 +19,29 @@ const closeRulesBtn = document.querySelector('#close-rules-btn')
 
 const palette = document.querySelector('#palette')
 
+const editRuleDialog = document.querySelector('#edit-rule-dialog')
+
+const ruleTextInput = document.querySelector('#rule-text-input')
+
+const editPalette = document.querySelector('#edit-palette')
+
+const applyRuleBtn = document.querySelector('#apply-rule-btn')
+const removeRuleBtn = document.querySelector('#remove-rule-btn')
+const cancelRuleBtn = document.querySelector('#cancel-rule-btn')
+
 let pendingSelection = null
-
-function loadState() {
-  const saved = localStorage.getItem(STORAGE_KEY)
-
-  if (!saved) {
-    return {
-      code: '',
-      rules: []
-    }
-  }
-
-  return JSON.parse(saved)
-}
-
-
-function saveState() {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(state)
-  )
-}
-
-
-function render() {
-  let html = ''
-  let position = 0
-
-  const rules = [...state.rules]
-    .sort((a, b) => a.start - b.start)
-
-  for (const rule of rules) {
-    html += escapeHtml(
-      state.code.slice(position, rule.start)
-    )
-
-    html += `<span style="color:${rule.color}">`
-    html += escapeHtml(rule.text)
-    html += '</span>'
-
-    position = rule.end
-  }
-
-  html += escapeHtml(
-    state.code.slice(position)
-  )
-
-  codeView.innerHTML = html
-}
-
-
-function escapeHtml(text) {
-  return text
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-}
-
-
-function overlaps(start, end) {
-  return state.rules.some(rule =>
-    start < rule.end &&
-    end > rule.start
-  )
-}
-
+let editingRule = null
+let editingColor = null
+let originalRuleText = ''
 
 feedCodeBtn.addEventListener('click', () => {
   codeInput.value = state.code
   feedCodeDialog.showModal()
 })
 
-
 cancelCodeBtn.addEventListener('click', () => {
   feedCodeDialog.close()
 })
-
 
 applyCodeBtn.addEventListener('click', () => {
   state.code = codeInput.value
@@ -107,7 +53,6 @@ applyCodeBtn.addEventListener('click', () => {
   feedCodeDialog.close()
 })
 
-
 rulesBtn.addEventListener('click', () => {
   rulesView.textContent = JSON.stringify(
     state.rules,
@@ -118,11 +63,9 @@ rulesBtn.addEventListener('click', () => {
   rulesDialog.showModal()
 })
 
-
 closeRulesBtn.addEventListener('click', () => {
   rulesDialog.close()
 })
-
 
 codeView.addEventListener('mouseup', () => {
   const selection = window.getSelection()
@@ -132,30 +75,27 @@ codeView.addEventListener('mouseup', () => {
     return
   }
 
-  const text = selection.toString()
+  const offsets = getSelectionOffsets()
 
-  const start = state.code.indexOf(text)
-
-  if (start === -1) {
+  if (!offsets) {
     return
   }
 
-  const end = start + text.length
-
   pendingSelection = {
-    start,
-    end,
-    text
+    ...offsets,
+    text: selection.toString()
   }
 
-  const rect = selection.getRangeAt(0).getBoundingClientRect()
+  const rect =
+    selection
+      .getRangeAt(0)
+      .getBoundingClientRect()
 
   palette.style.left = `${rect.left}px`
   palette.style.top = `${rect.bottom + 5}px`
 
   palette.hidden = false
 })
-
 
 palette.addEventListener('click', event => {
   const color = event.target.dataset.color
@@ -192,5 +132,200 @@ palette.addEventListener('click', event => {
   pendingSelection = null
 })
 
+codeView.addEventListener('click', event => {
+  const span = event.target.closest('[data-rule-id]')
+
+  if (!span) return
+
+  const rule = state.rules.find(
+    rule => rule.id === span.dataset.ruleId
+  )
+
+  if (!rule) return
+
+  openEditRule(rule)
+})
+
+editPalette.addEventListener('click', event => {
+  const color = event.target.dataset.color
+
+  if (!color) {
+    return
+  }
+
+  editingColor = color
+
+  checkRuleChanges()
+})
+
+applyRuleBtn.addEventListener('click', () => {
+  const oldLength = editingRule.text.length
+  const newText = ruleTextInput.value
+
+  const difference =
+    newText.length - oldLength
+
+
+  const index = state.rules.indexOf(editingRule)
+
+  const oldEnd = editingRule.end
+
+
+  state.code =
+    state.code.slice(0, editingRule.start) +
+    newText +
+    state.code.slice(oldEnd)
+
+
+  editingRule.text = newText
+  editingRule.end =
+    editingRule.start + newText.length
+
+  editingRule.color = editingColor
+
+
+  for (const rule of state.rules) {
+    if (rule === editingRule) {
+      continue
+    }
+
+    if (rule.start >= oldEnd) {
+      rule.start += difference
+      rule.end += difference
+    }
+  }
+
+
+  saveState()
+  render()
+
+  editRuleDialog.close()
+})
+
+removeRuleBtn.addEventListener('click', () => {
+  state.rules =
+    state.rules.filter(
+      rule => rule !== editingRule
+    )
+
+  saveState()
+  render()
+
+  editRuleDialog.close()
+})
+
+ruleTextInput.addEventListener(
+  'input',
+  checkRuleChanges
+)
+
+cancelRuleBtn.addEventListener('click', () => {
+  editRuleDialog.close()
+})
 
 render()
+
+function loadState() {
+  const saved = localStorage.getItem(STORAGE_KEY)
+
+  if (!saved) {
+    return {
+      code: '',
+      rules: []
+    }
+  }
+
+  return JSON.parse(saved)
+}
+
+function saveState() {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(state)
+  )
+}
+
+function render() {
+  let html = ''
+  let position = 0
+
+  const rules = [...state.rules]
+    .sort((a, b) => a.start - b.start)
+
+  for (const rule of rules) {
+    html += escapeHtml(
+      state.code.slice(position, rule.start)
+    )
+    html += `<span 
+      data-rule-id="${rule.id}" 
+      style="color:${rule.color}; cursor:pointer"
+    >`
+    html += escapeHtml(rule.text)
+    html += '</span>'
+
+    position = rule.end
+  }
+
+  html += escapeHtml(
+    state.code.slice(position)
+  )
+
+  codeView.innerHTML = html
+}
+
+function escapeHtml(text) {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+}
+
+function overlaps(start, end) {
+  return state.rules.some(rule =>
+    start < rule.end &&
+    end > rule.start
+  )
+}
+
+function openEditRule(rule) {
+  editingRule = rule
+  editingColor = rule.color
+  originalRuleText = rule.text
+
+  ruleTextInput.value = rule.text
+
+  applyRuleBtn.hidden = true
+
+  editRuleDialog.showModal()
+}
+
+function checkRuleChanges() {
+  applyRuleBtn.hidden =
+    ruleTextInput.value === originalRuleText &&
+    editingColor === editingRule.color
+}
+
+function getSelectionOffsets() {
+  const selection = window.getSelection()
+
+  if (!selection.rangeCount) {
+    return null
+  }
+
+  const range = selection.getRangeAt(0)
+
+  const preRange = range.cloneRange()
+
+  preRange.selectNodeContents(codeView)
+  preRange.setEnd(
+    range.startContainer,
+    range.startOffset
+  )
+
+  const start = preRange.toString().length
+
+  return {
+    start,
+    end: start + selection.toString().length
+  }
+}

@@ -81,33 +81,43 @@ textarea {
   border-radius: 6px;
 }
 
-#palette button {
+#palette button, #edit-palette button {
   width: 28px;
   height: 28px;
 
   padding: 0;
 }
 
-#palette button[data-color="#ffb86c"] {
+button[data-color="#ffb86c"] {
   background: #ffb86c;
 }
 
-#palette button[data-color="#8be9fd"] {
+button[data-color="#8be9fd"] {
   background: #8be9fd;
 }
 
-#palette button[data-color="#50fa7b"] {
+button[data-color="#50fa7b"] {
   background: #50fa7b;
 }
 
-#palette button[data-color="#ff79c6"] {
+button[data-color="#ff79c6"] {
   background: #ff79c6;
 }
 
-#palette button[data-color="#bd93f9"] {
+button[data-color="#bd93f9"] {
   background: #bd93f9;
 }
 
-#palette button[data-color="#f1fa8c"] {
+button[data-color="#f1fa8c"] {
   background: #f1fa8c;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+#edit-palette {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0;
 }
