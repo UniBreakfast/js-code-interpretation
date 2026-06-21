@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS Coloring Tool</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./script.js" defer></script>
+</head>
+
+<body>
+  <header>
+    <button id="feed-code-btn">Feed Code</button>
+    <button id="rules-btn">See Coloring Rules</button>
+  </header>
+
+  <main>
+    <pre id="code-view"></pre>
+  </main>
+
+  <dialog id="feed-code-dialog">
+    <h2>Feed Code</h2>
+
+    <textarea id="code-input"></textarea>
+
+    <div>
+      <button id="apply-code-btn">Apply</button>
+      <button id="cancel-code-btn">Cancel</button>
+    </div>
+  </dialog>
+
+  <dialog id="rules-dialog">
+    <h2>Coloring Rules</h2>
+
+    <pre id="rules-view"></pre>
+
+    <div>
+      <button id="close-rules-btn">Close</button>
+    </div>
+  </dialog>
+</body>
+
+</html>
