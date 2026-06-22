@@ -164,41 +164,17 @@ editPalette.addEventListener('click', event => {
 applyRuleBtn.addEventListener('click', () => {
   const oldLength = editingRule.text.length
   const newText = ruleTextInput.value
-
-  const difference =
-    newText.length - oldLength
-
-
-  const index = state.coloring.indexOf(editingRule)
-
+  const difference = newText.length - oldLength
   const oldEnd = editingRule.end
 
-
-  state.code =
-    state.code.slice(0, editingRule.start) +
-    newText +
-    state.code.slice(oldEnd)
-
+  replaceTextRange(editingRule.start, oldEnd, newText)
 
   editingRule.text = newText
-  editingRule.end =
-    editingRule.start + newText.length
-
+  editingRule.end = editingRule.start + newText.length
   editingRule.color = editingColor
-
-
-  for (const rule of state.coloring) {
-    if (rule === editingRule) {
-      continue
-    }
-
-    if (rule.start >= oldEnd) {
-      rule.start += difference
-      rule.end += difference
-    }
-  }
-
-
+  
+  shiftFollowingRanges(oldEnd, difference, editingRule.id)
+  refreshStoredTexts()
   saveState()
   render()
 
@@ -460,5 +436,48 @@ function renderStructureKinds() {
     })
 
     structureKinds.append(button)
+  }
+}
+
+function shiftFollowingRanges(oldEnd, difference, excludedId) {
+  for (const item of state.coloring) {
+    if (item.id === excludedId) continue
+
+    if (item.start >= oldEnd) {
+      item.start += difference
+      item.end += difference
+    }
+  }
+
+  for (const item of state.structures) {
+    if (item.id === excludedId) continue
+
+    if (item.start >= oldEnd) {
+      item.start += difference
+      item.end += difference
+    }
+  }
+}
+
+function replaceTextRange(start, end, newText) {
+  state.code =
+    state.code.slice(0, start) + newText + state.code.slice(end)
+}
+
+function refreshStoredTexts() {
+  for (const item of state.coloring) {
+    item.text =
+      state.code.slice(
+        item.start,
+        item.end
+      )
+  }
+
+  for (const item of state.structures) {
+    item.text =
+      state.code.slice(
+        item.start,
+        item.end
+      )
   }
 }
