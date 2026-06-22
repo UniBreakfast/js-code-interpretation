@@ -5,17 +5,17 @@ const state = loadState()
 const codeView = document.querySelector('#code-view')
 
 const feedCodeBtn = document.querySelector('#feed-code-btn')
-const rulesBtn = document.querySelector('#rules-btn')
+const coloringBtn = document.querySelector('#rules-btn')
 
 const feedCodeDialog = document.querySelector('#feed-code-dialog')
-const rulesDialog = document.querySelector('#rules-dialog')
+const coloringDialog = document.querySelector('#rules-dialog')
 
 const codeInput = document.querySelector('#code-input')
-const rulesView = document.querySelector('#rules-view')
+const coloringView = document.querySelector('#rules-view')
 
 const applyCodeBtn = document.querySelector('#apply-code-btn')
 const cancelCodeBtn = document.querySelector('#cancel-code-btn')
-const closeRulesBtn = document.querySelector('#close-rules-btn')
+const closeColoringBtn = document.querySelector('#close-rules-btn')
 
 const palette = document.querySelector('#palette')
 
@@ -45,7 +45,7 @@ cancelCodeBtn.addEventListener('click', () => {
 
 applyCodeBtn.addEventListener('click', () => {
   state.code = codeInput.value
-  state.rules = []
+  state.coloring = []
 
   saveState()
   render()
@@ -53,18 +53,18 @@ applyCodeBtn.addEventListener('click', () => {
   feedCodeDialog.close()
 })
 
-rulesBtn.addEventListener('click', () => {
-  rulesView.textContent = JSON.stringify(
-    state.rules,
+coloringBtn.addEventListener('click', () => {
+  coloringView.textContent = JSON.stringify(
+    state.coloring,
     null,
     2
   )
 
-  rulesDialog.showModal()
+  coloringDialog.showModal()
 })
 
-closeRulesBtn.addEventListener('click', () => {
-  rulesDialog.close()
+closeColoringBtn.addEventListener('click', () => {
+  coloringDialog.close()
 })
 
 codeView.addEventListener('mouseup', () => {
@@ -117,7 +117,7 @@ palette.addEventListener('click', event => {
   }
 
 
-  state.rules.push({
+  state.coloring.push({
     id: crypto.randomUUID(),
     start,
     end,
@@ -137,7 +137,7 @@ codeView.addEventListener('click', event => {
 
   if (!span) return
 
-  const rule = state.rules.find(
+  const rule = state.coloring.find(
     rule => rule.id === span.dataset.ruleId
   )
 
@@ -166,7 +166,7 @@ applyRuleBtn.addEventListener('click', () => {
     newText.length - oldLength
 
 
-  const index = state.rules.indexOf(editingRule)
+  const index = state.coloring.indexOf(editingRule)
 
   const oldEnd = editingRule.end
 
@@ -184,7 +184,7 @@ applyRuleBtn.addEventListener('click', () => {
   editingRule.color = editingColor
 
 
-  for (const rule of state.rules) {
+  for (const rule of state.coloring) {
     if (rule === editingRule) {
       continue
     }
@@ -203,8 +203,8 @@ applyRuleBtn.addEventListener('click', () => {
 })
 
 removeRuleBtn.addEventListener('click', () => {
-  state.rules =
-    state.rules.filter(
+  state.coloring =
+    state.coloring.filter(
       rule => rule !== editingRule
     )
 
@@ -231,7 +231,7 @@ function loadState() {
   if (!saved) {
     return {
       code: '',
-      rules: []
+      coloring: []
     }
   }
 
@@ -249,10 +249,10 @@ function render() {
   let html = ''
   let position = 0
 
-  const rules = [...state.rules]
+  const coloring = [...state.coloring]
     .sort((a, b) => a.start - b.start)
 
-  for (const rule of rules) {
+  for (const rule of coloring) {
     html += escapeHtml(
       state.code.slice(position, rule.start)
     )
@@ -281,7 +281,7 @@ function escapeHtml(text) {
 }
 
 function overlaps(start, end) {
-  return state.rules.some(rule =>
+  return state.coloring.some(rule =>
     start < rule.end &&
     end > rule.start
   )
@@ -328,4 +328,29 @@ function getSelectionOffsets() {
     start,
     end: start + selection.toString().length
   }
+}
+
+function structureConflicts(start, end) {
+  return state.structures.some(
+    structure => {
+
+      const same =
+        start === structure.start &&
+        end === structure.end
+
+      const crossing =
+        start < structure.start &&
+        end > structure.start &&
+        end < structure.end
+
+      const crossedBy =
+        structure.start < start &&
+        structure.end > start &&
+        structure.end < end
+
+      return same ||
+        crossing ||
+        crossedBy
+    }
+  )
 }

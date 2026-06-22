@@ -16,6 +16,7 @@
   <header>
     <button id="feed-code-btn">Feed Code</button>
     <button id="rules-btn">See Coloring Rules</button>
+    <button id="structures-btn">See Structures</button>
   </header>
 
   <main>
@@ -29,6 +30,7 @@
     <button data-color="#ff79c6"></button>
     <button data-color="#bd93f9"></button>
     <button data-color="#f1fa8c"></button>
+    <button id="create-structure-btn" title="Structure">S</button>
   </div>
 
   <dialog id="feed-code-dialog">
@@ -52,6 +54,16 @@
     </div>
   </dialog>
 
+  <dialog id="structures-dialog">
+    <h2>Structures</h2>
+
+    <pre id="structures-view"></pre>
+
+    <button id="close-structures-btn">
+      Close
+    </button>
+  </dialog>
+
   <dialog id="edit-rule-dialog">
     <h2>Edit Coloring</h2>
 
@@ -71,6 +83,30 @@
       <button id="remove-rule-btn">Remove Coloring</button>
       <button id="cancel-rule-btn">Cancel</button>
     </div>
+  </dialog>
+
+  <dialog id="create-structure-dialog">
+    <h2>Create Structure</h2>
+
+    <label>
+      Kind
+      <input id="structure-kind-input">
+    </label>
+
+    <label>
+      Label
+      <input id="structure-label-input">
+    </label>
+
+    <div id="structure-kinds"></div>
+
+    <button id="apply-structure-btn">
+      Apply
+    </button>
+
+    <button id="cancel-structure-btn">
+      Cancel
+    </button>
   </dialog>
 </body>
 
