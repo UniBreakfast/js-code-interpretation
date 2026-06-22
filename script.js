@@ -1,35 +1,36 @@
 const STORAGE_KEY = 'js-coloring-tool'
 
 const state = loadState()
-
 const codeView = document.querySelector('#code-view')
-
 const feedCodeBtn = document.querySelector('#feed-code-btn')
 const coloringBtn = document.querySelector('#rules-btn')
-
 const feedCodeDialog = document.querySelector('#feed-code-dialog')
 const coloringDialog = document.querySelector('#rules-dialog')
-
 const codeInput = document.querySelector('#code-input')
 const coloringView = document.querySelector('#rules-view')
-
 const applyCodeBtn = document.querySelector('#apply-code-btn')
 const cancelCodeBtn = document.querySelector('#cancel-code-btn')
 const closeColoringBtn = document.querySelector('#close-rules-btn')
-
 const palette = document.querySelector('#palette')
-
 const editRuleDialog = document.querySelector('#edit-rule-dialog')
-
 const ruleTextInput = document.querySelector('#rule-text-input')
-
 const editPalette = document.querySelector('#edit-palette')
-
 const applyRuleBtn = document.querySelector('#apply-rule-btn')
 const removeRuleBtn = document.querySelector('#remove-rule-btn')
 const cancelRuleBtn = document.querySelector('#cancel-rule-btn')
+const structuresBtn = document.querySelector('#structures-btn')
+const structuresDialog = document.querySelector('#structures-dialog')
+const structuresView = document.querySelector('#structures-view')
+const closeStructuresBtn = document.querySelector('#close-structures-btn')
+const createStructureBtn = document.querySelector('#create-structure-btn')
+const createStructureDialog = document.querySelector('#create-structure-dialog')
+const structureKindInput = document.querySelector('#structure-kind-input')
+const structureLabelInput = document.querySelector('#structure-label-input')
+const structureKinds = document.querySelector('#structure-kinds')
+const applyStructureBtn = document.querySelector('#apply-structure-btn')
+const cancelStructureBtn = document.querySelector('#cancel-structure-btn')
 
-let pendingSelection = null
+let selectedRange = null
 let editingRule = null
 let editingColor = null
 let originalRuleText = ''
@@ -46,6 +47,8 @@ cancelCodeBtn.addEventListener('click', () => {
 applyCodeBtn.addEventListener('click', () => {
   state.code = codeInput.value
   state.coloring = []
+  state.structures = []
+  state.structureKinds = []
 
   saveState()
   render()
@@ -81,7 +84,7 @@ codeView.addEventListener('mouseup', () => {
     return
   }
 
-  pendingSelection = {
+  selectedRange = {
     ...offsets,
     text: selection.toString()
   }
@@ -100,7 +103,7 @@ codeView.addEventListener('mouseup', () => {
 palette.addEventListener('click', event => {
   const color = event.target.dataset.color
 
-  if (!color || !pendingSelection) {
+  if (!color || !selectedRange) {
     return
   }
 
@@ -108,7 +111,7 @@ palette.addEventListener('click', event => {
     start,
     end,
     text
-  } = pendingSelection
+  } = selectedRange
 
 
   if (overlaps(start, end)) {
@@ -129,7 +132,7 @@ palette.addEventListener('click', event => {
   render()
 
   palette.hidden = true
-  pendingSelection = null
+  selectedRange = null
 })
 
 codeView.addEventListener('click', event => {
@@ -221,6 +224,95 @@ ruleTextInput.addEventListener(
 
 cancelRuleBtn.addEventListener('click', () => {
   editRuleDialog.close()
+})
+
+structuresBtn.addEventListener('click', () => {
+  structuresView.textContent =
+    JSON.stringify(
+      state.structures,
+      null,
+      2
+    )
+
+  structuresDialog.showModal()
+})
+
+closeStructuresBtn.addEventListener('click', () => {
+  structuresDialog.close()
+})
+
+createStructureBtn.addEventListener('click', () => {
+  if (!selectedRange) return
+
+  renderStructureKinds()
+
+  structureKindInput.value = ''
+  structureLabelInput.value = ''
+
+  createStructureDialog.showModal()
+
+  palette.hidden = true
+})
+
+applyStructureBtn.addEventListener('click', () => {
+  const kind =
+    structureKindInput.value.trim()
+
+  if (!kind) {
+    alert('Kind is required')
+    return
+  }
+
+  const label =
+    structureLabelInput.value.trim()
+
+  const {
+    start,
+    end,
+    text
+  } = selectedRange
+
+  if (
+    structureConflicts(
+      start,
+      end
+    )
+  ) {
+    alert(
+      'Invalid structure nesting'
+    )
+
+    return
+  }
+
+  state.structures.push({
+    id: crypto.randomUUID(),
+    start,
+    end,
+    text,
+    kind,
+    label
+  })
+
+  if (
+    !state.structureKinds.includes(
+      kind
+    )
+  ) {
+    state.structureKinds.push(
+      kind
+    )
+  }
+
+  saveState()
+
+  createStructureDialog.close()
+
+  selectedRange = null
+})
+
+cancelStructureBtn.addEventListener('click', () => {
+  createStructureDialog.close()
 })
 
 render()
@@ -353,4 +445,20 @@ function structureConflicts(start, end) {
         crossedBy
     }
   )
+}
+
+function renderStructureKinds() {
+  structureKinds.innerHTML = ''
+
+  for (const kind of state.structureKinds) {
+    const button = document.createElement('button')
+
+    button.textContent = kind
+
+    button.addEventListener('click', () => {
+      structureKindInput.value = kind
+    })
+
+    structureKinds.append(button)
+  }
 }
