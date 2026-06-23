@@ -73,9 +73,7 @@ textarea {
   position: fixed;
   display: flex;
   gap: 6px;
-
   padding: 8px;
-
   background: #222;
   border: 1px solid #555;
   border-radius: 6px;

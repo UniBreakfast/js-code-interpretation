@@ -29,11 +29,28 @@ const structureLabelInput = document.querySelector('#structure-label-input')
 const structureKinds = document.querySelector('#structure-kinds')
 const applyStructureBtn = document.querySelector('#apply-structure-btn')
 const cancelStructureBtn = document.querySelector('#cancel-structure-btn')
+const designationDialog = document.querySelector('#designation-dialog')
+const designationList = document.querySelector('#designation-list')
+const cancelDesignationBtn = document.querySelector('#cancel-designation-btn')
+const editStructureDialog = document.querySelector('#edit-structure-dialog')
+const structureTextInput = document.querySelector('#structure-text-input')
+const editStructureKindInput = document.querySelector('#edit-structure-kind-input')
+const editStructureKinds = document.querySelector('#edit-structure-kinds')
+const editStructureLabelInput =
+  document.querySelector('#edit-structure-label-input')
+const applyStructureEditBtn = document.querySelector('#apply-structure-edit-btn')
+const deleteStructureBtn = document.querySelector('#delete-structure-btn')
+const cancelStructureEditBtn = document.querySelector('#cancel-structure-edit-btn')
 
 let selectedRange = null
 let editingRule = null
 let editingColor = null
+let editingStructure = null
+let selectedDesignation = null
 let originalRuleText = ''
+let originalStructureText = ''
+let originalStructureKind = ''
+let originalStructureLabel = ''
 
 feedCodeBtn.addEventListener('click', () => {
   codeInput.value = state.code
@@ -136,17 +153,21 @@ palette.addEventListener('click', event => {
 })
 
 codeView.addEventListener('click', event => {
-  const span = event.target.closest('[data-rule-id]')
+  const offset = getClickOffset(event)
 
-  if (!span) return
+  if (offset === null) return
 
-  const rule = state.coloring.find(
-    rule => rule.id === span.dataset.ruleId
-  )
+  const designations = findDesignationsAt(offset)
 
-  if (!rule) return
+  if (!designations.length) return
 
-  openEditRule(rule)
+  if (designations.length === 1) {
+    chooseDesignation(designations[0])
+    return
+  }
+
+  renderDesignationList(designations)
+  designationDialog.showModal()
 })
 
 editPalette.addEventListener('click', event => {
@@ -172,7 +193,7 @@ applyRuleBtn.addEventListener('click', () => {
   editingRule.text = newText
   editingRule.end = editingRule.start + newText.length
   editingRule.color = editingColor
-  
+
   shiftFollowingRanges(oldEnd, difference, editingRule.id)
   refreshStoredTexts()
   saveState()
@@ -193,10 +214,7 @@ removeRuleBtn.addEventListener('click', () => {
   editRuleDialog.close()
 })
 
-ruleTextInput.addEventListener(
-  'input',
-  checkRuleChanges
-)
+ruleTextInput.addEventListener('input', checkRuleChanges)
 
 cancelRuleBtn.addEventListener('click', () => {
   editRuleDialog.close()
@@ -289,6 +307,60 @@ applyStructureBtn.addEventListener('click', () => {
 
 cancelStructureBtn.addEventListener('click', () => {
   createStructureDialog.close()
+})
+
+structureTextInput.addEventListener('input', checkStructureChanges)
+
+editStructureKindInput.addEventListener('input', checkStructureChanges)
+
+editStructureLabelInput.addEventListener('input', checkStructureChanges)
+
+applyStructureEditBtn.addEventListener('click', () => {
+  const newText = structureTextInput.value
+  const newKind = editStructureKindInput.value.trim()
+  const newLabel = editStructureLabelInput.value.trim()
+
+  if (!newKind) {
+    alert('Kind is required')
+    return
+  }
+
+  const oldEnd = editingStructure.end
+  const difference = newText.length - editingStructure.text.length
+
+  replaceTextRange(editingStructure.start, editingStructure.end, newText)
+
+  editingStructure.end = editingStructure.start + newText.length
+  editingStructure.kind = newKind
+  editingStructure.label = newLabel
+
+  shiftFollowingRanges(oldEnd, difference, editingStructure.id)
+  refreshStoredTexts()
+
+  if (!state.structureKinds.includes(newKind)) {
+    state.structureKinds.push(newKind)
+  }
+
+  saveState()
+  render()
+  editStructureDialog.close()
+})
+
+deleteStructureBtn.addEventListener('click', () => {
+  state.structures = state.structures.filter(
+    structure => structure !== editingStructure
+  )
+
+  saveState()
+  editStructureDialog.close()
+})
+
+cancelStructureEditBtn.addEventListener('click', () => {
+  editStructureDialog.close()
+})
+
+cancelDesignationBtn.addEventListener('click', () => {
+  designationDialog.close()
 })
 
 render()
@@ -480,4 +552,117 @@ function refreshStoredTexts() {
         item.end
       )
   }
+}
+
+function findDesignationsAt(offset) {
+  const designations = []
+
+  for (const coloring of state.coloring) {
+    if (offset >= coloring.start && offset < coloring.end) {
+      designations.push({
+        type: 'coloring',
+        item: coloring,
+        size: coloring.end - coloring.start
+      })
+    }
+  }
+
+  for (const structure of state.structures) {
+    if (offset >= structure.start && offset < structure.end) {
+      designations.push({
+        type: 'structure',
+        item: structure,
+        size: structure.end - structure.start
+      })
+    }
+  }
+
+  return designations.sort((a, b) => a.size - b.size)
+}
+
+function renderDesignationList(designations) {
+  designationList.innerHTML = ''
+
+  for (const designation of designations) {
+    const button = document.createElement('button')
+
+    if (designation.type === 'coloring') {
+      button.textContent = `Coloring: ${designation.item.text}`
+    }
+
+    if (designation.type === 'structure') {
+      button.textContent = `${designation.item.kind}: ${designation.item.text}`
+    }
+
+    button.addEventListener(
+      'click',
+      () => { chooseDesignation(designation) }
+    )
+
+    designationList.append(button)
+  }
+}
+
+function chooseDesignation(designation) {
+  designationDialog.close()
+
+  if (designation.type === 'coloring') {
+    openEditRule(designation.item)
+  }
+
+  if (designation.type === 'structure') {
+    openEditStructure(designation.item)
+  }
+}
+
+function openEditStructure(structure) {
+  editingStructure = structure
+  originalStructureText = structure.text
+  originalStructureKind = structure.kind
+  originalStructureLabel = structure.label
+  structureTextInput.value = structure.text
+  editStructureKindInput.value = structure.kind
+  editStructureLabelInput.value = structure.label
+
+  renderEditStructureKinds()
+
+  applyStructureEditBtn.hidden = true
+  editStructureDialog.showModal()
+}
+
+function getClickOffset(event) {
+  const range = document.caretRangeFromPoint(event.clientX, event.clientY)
+
+  if (!range) { return null }
+
+  const preRange = range.cloneRange()
+
+  preRange.selectNodeContents(codeView)
+  preRange.setEnd(range.startContainer, range.startOffset)
+
+  return preRange.toString().length
+}
+
+function renderEditStructureKinds() {
+  editStructureKinds.innerHTML = ''
+
+  for (const kind of state.structureKinds) {
+    const button = document.createElement('button')
+
+    button.textContent = kind
+
+    button.addEventListener('click', () => {
+      editStructureKindInput.value = kind
+      checkStructureChanges()
+    })
+
+    editStructureKinds.append(button)
+  }
+}
+
+function checkStructureChanges() {
+  applyStructureEditBtn.hidden =
+    structureTextInput.value === originalStructureText &&
+    editStructureKindInput.value === originalStructureKind &&
+    editStructureLabelInput.value === originalStructureLabel
 }
