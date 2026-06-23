@@ -119,3 +119,60 @@ button[data-color="#f1fa8c"] {
   gap: 6px;
   margin: 10px 0;
 }
+
+dialog label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+dialog input,
+dialog textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+dialog textarea {
+  min-height: 12rem;
+}
+
+#structure-kinds,
+#edit-structure-kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 12px;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+#designation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+#designation-list button {
+  text-align: left;
+}
+
+.designation {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+.designation-title {
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.designation-code {
+  margin: 0;
+  font-family: Consolas, monospace;
+  font-size: 1rem;
+  white-space: pre-wrap;
+}

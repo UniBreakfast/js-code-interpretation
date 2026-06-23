@@ -585,21 +585,28 @@ function renderDesignationList(designations) {
 
   for (const designation of designations) {
     const button = document.createElement('button')
+    const title = document.createElement('div')
+    const code = document.createElement('pre')
+
+    button.className = 'designation'
+    title.className = 'designation-title'
+    code.className = 'designation-code'
 
     if (designation.type === 'coloring') {
-      button.textContent = `Coloring: ${designation.item.text}`
+      title.textContent = '🎨 Coloring'
     }
 
     if (designation.type === 'structure') {
-      button.textContent = `${designation.item.kind}: ${designation.item.text}`
+      title.textContent = `🏗️ ${designation.item.kind}`
     }
 
-    button.addEventListener(
-      'click',
-      () => { chooseDesignation(designation) }
-    )
-
+    code.textContent = designation.item.text
+    button.append(title, code)
     designationList.append(button)
+
+    button.addEventListener('click', () => {
+      chooseDesignation(designation)
+    })
   }
 }
 
